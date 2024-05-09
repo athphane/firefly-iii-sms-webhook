@@ -6,7 +6,9 @@ use App\Filament\Resources\VendorResource\Pages;
 use App\Models\Vendor;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -40,6 +42,11 @@ class VendorResource extends Resource
 
                                 Textarea::make('description')
                                 ->rows(5),
+
+                                Repeater::make('aliases')
+                                    ->schema([
+                                        TextInput::make('name')->required(),
+                                    ])
                             ]),
 
                         Section::make()

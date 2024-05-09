@@ -12,6 +12,11 @@ class Vendor extends Model
     protected $fillable = [
         'name',
         'description',
+        'aliases',
+    ];
+
+    protected $casts = [
+        'aliases' => 'array',
     ];
 }
 
