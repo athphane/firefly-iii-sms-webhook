@@ -44,9 +44,9 @@ class SyncFireflyInstanceVendorsCommand extends Command
             $account_id = $account['id'];
             $attributes = $account['attributes'];
             $notes = $attributes['notes'] ?? null;
-            if (str($notes)->contains('*
+            if (str($notes)->contains('***
 NOT A VENDOR
-*')) {
+***')) {
                 $this->line('Skipping account: ' . $attributes['name'] . ' as it is not a vendor.');
                 continue;
             }
