@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('reference_no');
             $table->string('approval_code');
             $table->dateTime('transaction_at');
+            $table->boolean('created_on_firefly')->default(false);
             $table->foreignIdFor(\App\Models\Vendor::class)->constrained()->cascadeOnDelete();
             $table->timestamps();
         });

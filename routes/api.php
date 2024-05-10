@@ -9,6 +9,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         return $request->user();
     });
 
-    Route::get('transactions/webhook', [\App\Http\Controllers\Api\TransactionWebhookController::class, 'store'])
+    Route::post('transactions/webhook', [\App\Http\Controllers\Api\TransactionWebhookController::class, 'store'])
         ->middleware('abilities:webhook:write');
 });

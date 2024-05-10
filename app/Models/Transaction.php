@@ -17,18 +17,23 @@ class Transaction extends Model
         'reference_no',
         'approval_code',
         'transaction_at',
-        'vendor_id',
     ];
 
-    public function vendor()
+    protected function casts(): array
+    {
+        return [
+            'transaction_at' => 'datetime',
+            'created_on_firefly' => 'boolean',
+        ];
+    }
+
+    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Vendor::class);
     }
 
-    protected function casts()
+    public function createTransactionOnFirefly()
     {
-        return [
-            'transaction_at' => 'datetime',
-        ];
+
     }
 }
