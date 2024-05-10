@@ -17,7 +17,7 @@ class TestTransactionCommand extends Command
      */
     public function handle(): void
     {
-        $response = Http::withToken('1|uPAZVUTF4ImuNwJqdEh9BgAo4QH1YUTov6wJySBS83d301c9')
+        $response = Http::withToken(env('SELF_API_KEY'))
             ->acceptJson()
             ->post('http://firefly-sms-webhook.test/api/transactions/webhook', [
                 'message' => 'Transaction from 9516 on 06/05/24 at 05:45:18 for MVR434.67 at STELCO                    was processed. Reference No:412700179797, Approval Code:179797.'

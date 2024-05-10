@@ -12,6 +12,9 @@ return new class extends Migration {
             $table->string('name');
             $table->string('description')->nullable();
             $table->json('aliases')->nullable();
+
+            $table->unsignedBigInteger('firefly_account_id')->nullable();
+
             $table->timestamps();
         });
     }
