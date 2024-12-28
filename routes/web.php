@@ -6,4 +6,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::post('');
+Route::get('test', function () {
+    return app('firefly-iii')->about();
+});
