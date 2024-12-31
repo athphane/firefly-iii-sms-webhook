@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\FireflyIII\ParsedTransactionMessage;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -16,6 +17,19 @@ class OpenWebUiTestCommand extends Command
      * @throws ConnectionException
      */
     public function handle(): void
+    {
+        $parsed_transaction = $this->callAI();
+
+        $thing = $parsed_transaction->createTransactionOnFirefly();
+
+        dd($thing);
+
+    }
+
+    /**
+     * @throws ConnectionException
+     */
+    public function callAI(): ParsedTransactionMessage
     {
         $response = Http::baseUrl(config('openai.openwebui.base_url'))
             ->acceptJson()
@@ -33,14 +47,29 @@ class OpenWebUiTestCommand extends Command
                         'content' => $this->getSystemMessage()
                     ],
                 ],
-            ]);
+            ])
+            ->json('choices.0.message.content');
 
-        dd($response->json());
+        // dd($response->json());
+
+        $data = json_decode($response, true);
+
+        return ParsedTransactionMessage::make($this->getSampleTransaction(), $data);
     }
 
     public function getSystemMessage(): string
     {
-        return "You are a companion piece of a larger system that helps me to categorize my day to day transactions. I will give you a sample set of Transaction Alert Messages that I receive from my bank. Each of the transaction messages will contain what card the transaction was on, the date and time of the transaction, the currency and amount of the transaction, where the transaction was taken place, and other information such as approval codes and reference number. Your task is it to extract out the important details of each transaction. You should output each transaction as a json object. Please do not do any markdown formatting. Give the json object as as string. The system that uses you will parse it into json and go on from there.";
+        return <<<EOD
+You are a companion piece of a larger system that helps me to categorize my day to day transactions.
+I will give you a sample set of Transaction Alert Messages that I receive from my bank.
+Each of the transaction messages will contain what card the transaction was on,
+the date and time of the transaction, the currency and amount of the transaction,
+where the transaction was taken place, and other information such as approval codes and reference number.
+Your task is it to extract out the important details of each transaction.
+You should output each transaction as a json object. Give the json object as as string. The json object you return MUST have the following keys: card,date,time,currency,amount,location,approval_code,reference_no.
+If you cannot find any of the above keys, please return null.
+The system that uses you will parse it into json and go on from there. Please do not do any markdown formatting.
+EOD;
     }
 
     public function getSampleTransaction(): string
