@@ -57,24 +57,36 @@ class FireflyIII
 
     public function createTransaction(ParsedTransactionMessage $parsed_transaction): array
     {
+        $destination_account = $parsed_transaction->getFirstSimilarAccountName();
+
+        $transaction_data = [
+            'type'             => TransactionTypes::WITHDRAWAL->value,
+            'date'             => $parsed_transaction->getDate()->toIso8601String(),
+            'amount'           => $parsed_transaction->amount,
+            'description'      => $parsed_transaction->getPossibleTransactionDescription(),
+            'source_id'        => config('firefly-iii.default_account_id'),
+            // 'destination_name' => $parsed_transaction->getFirstSimilarAccountName(),
+            'category_id'      => $parsed_transaction->getFirstPossibleCategoryId(),
+            'tags'             => ['powered-by-gemini'],
+            'notes'            => "Raw transaction message: $parsed_transaction->raw_transaction_message",
+        ];
+
+        if (is_string($destination_account)) {
+            $transaction_data['destination_name'] = $destination_account;
+        }
+
+        if (is_int($destination_account)) {
+            $transaction_data['destination_id'] = $destination_account;
+        }
+
+        $request_data = [
+            'transactions' => [$transaction_data],
+        ];
+
         return $this->getJson(
             endpoint: '/transactions',
             method: 'POST',
-            params: [
-                'transactions' => [
-                    [
-                        'type'             => TransactionTypes::WITHDRAWAL->value,
-                        'date'             => $parsed_transaction->getDate()->toIso8601String(),
-                        'amount'           => $parsed_transaction->amount,
-                        'description'      => $parsed_transaction->getPossibleTransactionDescription(),
-                        'source_id'        => config('firefly.instance.account_id'),
-                        'destination_name' => $parsed_transaction->getFirstSimilarAccountName(),
-                        'category_id'      => $parsed_transaction->getFirstPossibleCategoryId(),
-                        'tags'             => ['powered-by-gemini'],
-                        'notes'            => "Raw transaction message: $parsed_transaction->raw_transaction_message",
-                    ],
-                ],
-            ],
+            params: $request_data,
         );
     }
 

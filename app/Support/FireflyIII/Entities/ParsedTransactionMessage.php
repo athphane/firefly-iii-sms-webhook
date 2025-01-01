@@ -2,6 +2,7 @@
 
 namespace App\Support\FireflyIII\Entities;
 
+use App\Models\Vendor;
 use App\Support\FireflyIII\Facades\FireflyIII;
 use Carbon\CarbonImmutable;
 
@@ -75,25 +76,37 @@ class ParsedTransactionMessage
         return $accounts;
     }
 
-    public function getFirstSimilarAccountId(): string
+    public function getFirstSimilarAccountId(): ?string
     {
-        return $this->getSimilarAccounts()[0]['id'];
+        $similar_accounts = Vendor::withAliases($this->location)->get();
+
+        if ($similar_accounts->count() === 0) {
+            return null;
+        }
+
+        return $similar_accounts->first()->firefly_account_id;
     }
 
-    public function getFirstSimilarAccountName(): string
+    public function getFirstSimilarAccountName(): string|int
     {
-        $similar_accounts = $this->getSimilarAccounts();
+        $similar_accounts = Vendor::withAliases($this->location)->get();
 
-        if (count($similar_accounts) === 0) {
+        if ($similar_accounts->count() === 0) {
             return str($this->location)->lower()->toString();
         }
 
-        return $similar_accounts[0]['name'];
+        return $similar_accounts->first()->firefly_account_id;
     }
 
     public function getSimilarTransactionDescriptions(): array
     {
-        $raw_transactions = FireflyIII::getTransactionsFromAccount($this->getFirstSimilarAccountId());
+        $first_similar_account_id = $this->getFirstSimilarAccountId();
+
+        if ($first_similar_account_id === null) {
+            return [];
+        }
+
+        $raw_transactions = FireflyIII::getTransactionsFromAccount($first_similar_account_id);
 
         $transaction_descriptions = [];
 
@@ -112,7 +125,7 @@ class ParsedTransactionMessage
     {
         return collect($this->getSimilarTransactionDescriptions())
             ->unique()
-            ->first();
+            ->first() ?? 'ADD DESCRIPTION TO THIS TRANSACTION';
     }
 
     public function getPossibleCategories(): array
