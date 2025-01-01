@@ -23,7 +23,6 @@ class OpenWebUiTestCommand extends Command
         $thing = $parsed_transaction->createTransactionOnFirefly();
 
         dd($thing);
-
     }
 
     /**
@@ -31,9 +30,9 @@ class OpenWebUiTestCommand extends Command
      */
     public function callAI(): ParsedTransactionMessage
     {
-        $response = Http::baseUrl(config('openai.openwebui.base_url'))
+        $response = Http::baseUrl(config('openwebui.base_url'))
             ->acceptJson()
-            ->withToken(config('openai.openwebui.api_key'))
+            ->withToken(config('openwebui.api_key'))
             ->post('chat/completions', [
                 'stream'   => false,
                 'model'    => 'google_genai.gemini-2.0-flash-exp',

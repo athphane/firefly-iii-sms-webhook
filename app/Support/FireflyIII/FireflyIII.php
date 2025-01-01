@@ -61,15 +61,15 @@ class FireflyIII
             params: [
                 'transactions' => [
                     [
-                        'type'        => TransactionTypes::WITHDRAWAL->value,
-                        'date'        => $parsed_transaction->getDate()->toIso8601String(),
-                        'amount'      => $parsed_transaction->amount,
-                        'description' => $parsed_transaction->getPossibleTransactionDescription(),
-                        'source_id'   => config('firefly.instance.account_id'),
+                        'type'             => TransactionTypes::WITHDRAWAL->value,
+                        'date'             => $parsed_transaction->getDate()->toIso8601String(),
+                        'amount'           => $parsed_transaction->amount,
+                        'description'      => $parsed_transaction->getPossibleTransactionDescription(),
+                        'source_id'        => config('firefly.instance.account_id'),
                         'destination_name' => $parsed_transaction->getFirstSimilarAccountName(),
-                        'category_id' => $parsed_transaction->getFirstPossibleCategoryId(),
-                        'tags' => ['powered-by-gemini'],
-                        'notes' => "Raw transaction message: $parsed_transaction->raw_transaction_message",
+                        'category_id'      => $parsed_transaction->getFirstPossibleCategoryId(),
+                        'tags'             => ['powered-by-gemini'],
+                        'notes'            => "Raw transaction message: $parsed_transaction->raw_transaction_message",
                     ],
                 ],
             ],
