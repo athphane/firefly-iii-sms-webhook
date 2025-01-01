@@ -16,6 +16,15 @@ class TransactionWebhookController extends Controller
             'message' => 'required|string'
         ]);
 
+        $message = $request->input('message');
+
+        // Check if the message is a OTP message
+        if (str($message)->lower()->contains(['one time password', 'otp'])) {
+            return response()->json([
+                'message' => 'Message received, but will not be processed.'
+            ]);
+        }
+
         $transaction = new Transaction(['message' => $request->input('message')]);
         $transaction->save();
 

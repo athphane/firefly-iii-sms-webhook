@@ -61,7 +61,11 @@ class TransactionProcessor
 
         $transaction->save();
 
-        $parsed_transaction->createTransactionOnFirefly();
+        $firefly_transaction = $parsed_transaction->createTransactionOnFirefly();
+        $firefly_transaction_id = data_get($firefly_transaction, 'data.id');
+
+        $transaction->firefly_transaction_id = $firefly_transaction_id;
+        $transaction->save();
     }
 
     private function getSystemMessage(): string

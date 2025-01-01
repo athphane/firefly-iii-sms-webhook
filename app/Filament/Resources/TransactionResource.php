@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Models\Transaction;
+use App\Support\FireflyIII\Facades\FireflyIII;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Group;
@@ -13,10 +14,12 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -106,22 +109,50 @@ class TransactionResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('vendor.name')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('currency'),
+                TextColumn::make('amount'),
+
                 TextColumn::make('transaction_at')
                     ->label('Transaction Date')
                     ->date(),
 
-                TextColumn::make('currency'),
+                IconColumn::make('firefly_transaction_id')
+                    ->icon(function ($record) {
+                        return match ($record->firefly_transaction_id) {
+                            null => 'heroicon-o-circle-slash',
+                            default => 'heroicon-o-check-circle',
+                        };
+                    })
+                    ->color(fn($state) => match ($state) {
+                        null => 'danger',
+                        default => 'success',
+                    })
 
-                TextColumn::make('amount'),
-
-                TextColumn::make('vendor.name')
-                    ->searchable()
-                    ->sortable(),
             ])
             ->filters([
                 //
             ])
             ->actions([
+                Action::make('open-in-ff')
+                    ->label('In FF')
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->color('slate')
+                    ->hidden(fn($record) => !isset($record->firefly_transaction_id))
+                    ->url(function ($record) {
+                        return FireflyIII::getTransactionUrl($record->firefly_transaction_id);
+                    }),
+
+                Action::make('sync-transaction')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('success')
+                    ->hidden(fn($record) => isset($record->firefly_transaction_id))
+                    ->action(function ($record) {
+                        $record->process();
+                    }),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
@@ -130,6 +161,13 @@ class TransactionResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->orderBy('id', 'desc');
     }
 
     public static function getPages(): array

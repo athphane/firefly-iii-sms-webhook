@@ -10,17 +10,19 @@ use Illuminate\Support\Facades\Http;
 class FireflyIII
 {
     public string $base_url;
+    public string $api_url;
     public string $api_key;
 
     public function __construct(string $base_url, string $api_key)
     {
         $this->base_url = $base_url;
+        $this->api_url = $this->base_url . '/api/v1';
         $this->api_key = $api_key;
     }
 
     private function getJson(string $endpoint, string $method = 'GET', array $params = []): array
     {
-        return Http::baseUrl($this->base_url)
+        return Http::baseUrl($this->api_url)
             ->withToken($this->api_key)
             ->$method($endpoint, $params)
             ->json();
@@ -135,5 +137,10 @@ class FireflyIII
             method: 'PUT',
             params: $data,
         );
+    }
+
+    public function getTransactionUrl(int|string $transaction_id): string
+    {
+        return $this->base_url . "/transactions/show/{$transaction_id}";
     }
 }

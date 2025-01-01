@@ -38,6 +38,10 @@ class Transaction extends Model
 
     public function process(): void
     {
+        if ($this->firefly_transaction_id) {
+            return;
+        }
+
         ProcessTransactionJob::dispatch($this);
     }
 }
