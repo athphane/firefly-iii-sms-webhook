@@ -16,7 +16,10 @@ class TransactionWebhookController extends Controller
             'message' => 'required|string'
         ]);
 
-        SaveIncomingTransactionJob::dispatchSync($request->input('message'));
+        $transaction = new Transaction(['message' => $request->input('message')]);
+        $transaction->save();
+
+        $transaction->process();
 
         return response()->json([
             'message' => 'Transaction webhook received. Processing.'
