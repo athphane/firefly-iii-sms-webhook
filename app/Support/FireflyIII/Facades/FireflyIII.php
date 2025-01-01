@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static array transactions()
  * @method static array getAccountsAutocomplete(string $query)
  * @method static array getTransactionsFromAccount(string $account_id)
- * @method static array createTransaction(\App\Support\FireflyIII\ParsedTransactionMessage $parsed_transaction)
+ * @method static array createTransaction(\App\Support\FireflyIII\Entities\ParsedTransactionMessage $parsed_transaction)
  *
  * @see \App\Support\FireflyIII\FireflyIII
  */

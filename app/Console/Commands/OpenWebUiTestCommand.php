@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Support\FireflyIII\ParsedTransactionMessage;
+use App\Support\FireflyIII\Entities\ParsedTransactionMessage;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;

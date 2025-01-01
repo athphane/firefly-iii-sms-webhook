@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\FireflyIII;
+namespace App\Support\FireflyIII\Entities;
 
 use App\Support\FireflyIII\Facades\FireflyIII;
 use Carbon\CarbonImmutable;

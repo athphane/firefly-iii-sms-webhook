@@ -2,6 +2,7 @@
 
 namespace App\Support\FireflyIII;
 
+use App\Support\FireflyIII\Entities\ParsedTransactionMessage;
 use App\Support\FireflyIII\Enums\TransactionTypes;
 use Illuminate\Support\Facades\Http;
 
