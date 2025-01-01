@@ -2,32 +2,35 @@
 
 namespace App\Models;
 
+use App\Support\FireflyIII\Enums\Currencies;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'message',
-        'vendor',
+        'card',
+        'transaction_at',
         'currency',
         'amount',
-        'reference_no',
+        'location',
         'approval_code',
-        'transaction_at',
+        'reference_no',
+        'message',
     ];
 
     protected function casts(): array
     {
         return [
             'transaction_at' => 'datetime',
-            'created_on_firefly' => 'boolean',
+            'currency'       => Currencies::class,
         ];
     }
 
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
     }

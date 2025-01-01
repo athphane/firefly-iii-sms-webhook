@@ -41,13 +41,14 @@ class TransactionResource extends Resource
                             ->schema([
                                 Section::make(__('Transaction Details'))
                                     ->schema([
-                                        TextInput::make('message')
+                                        TextInput::make('card')
                                             ->inlineLabel()
-                                            ->required(),
+                                            ->required()
+                                            ->numeric(),
 
-                                        TextInput::make('vendor')
+                                        DatePicker::make('transaction_at')
                                             ->inlineLabel()
-                                            ->required(),
+                                            ->label('Transaction Date'),
 
                                         TextInput::make('currency')
                                             ->inlineLabel()
@@ -58,7 +59,7 @@ class TransactionResource extends Resource
                                             ->required()
                                             ->numeric(),
 
-                                        TextInput::make('reference_no')
+                                        TextInput::make('location')
                                             ->inlineLabel()
                                             ->required(),
 
@@ -66,9 +67,13 @@ class TransactionResource extends Resource
                                             ->inlineLabel()
                                             ->required(),
 
-                                        DatePicker::make('transaction_at')
+                                        TextInput::make('reference_no')
                                             ->inlineLabel()
-                                            ->label('Transaction Date'),
+                                            ->required(),
+
+                                        TextInput::make('message')
+                                            ->inlineLabel()
+                                            ->required(),
                                     ]),
 
                                 Section::make(__('Related Vendor'))
