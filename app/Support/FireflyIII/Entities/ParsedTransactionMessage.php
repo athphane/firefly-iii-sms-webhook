@@ -3,6 +3,7 @@
 namespace App\Support\FireflyIII\Entities;
 
 use App\Models\Vendor;
+use App\Support\FireflyIII\Enums\Currencies;
 use App\Support\FireflyIII\Facades\FireflyIII;
 use Carbon\CarbonImmutable;
 
@@ -54,6 +55,21 @@ class ParsedTransactionMessage
         $this->location = $location;
         $this->approval_code = $approval_code;
         $this->reference_no = $reference_no;
+    }
+
+    public function getCurrency(): Currencies
+    {
+        return Currencies::from($this->currency);
+    }
+
+    public function isForeignTransaction(): bool
+    {
+        return $this->getCurrency() !== Currencies::MVR;
+    }
+
+    public function localAmount(): float
+    {
+        return round($this->amount * $this->getCurrency()->exchangeRate(), 2);
     }
 
     public function getDate(): CarbonImmutable

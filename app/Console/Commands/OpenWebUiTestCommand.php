@@ -73,6 +73,6 @@ EOD;
 
     public function getSampleTransaction(): string
     {
-        return "Transaction from 9516 on 01/01/25 at 11:06:12 for USD23.00 at DIGITALOCEAN.COM          was processed. Reference No:500106702250, Approval Code:702250.";
+        return "Transaction from 9516 on 01/01/25 at 13:32:59 for USD10.00 at LINODE . AKAMAI           was processed. Reference No:500108578364, Approval Code:578364.";
     }
 }

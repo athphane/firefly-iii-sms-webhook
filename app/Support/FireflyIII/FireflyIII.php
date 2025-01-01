@@ -59,6 +59,7 @@ class FireflyIII
     {
         $destination_account = $parsed_transaction->getFirstSimilarAccountName();
 
+        // Base transaction data
         $transaction_data = [
             'type'             => TransactionTypes::WITHDRAWAL->value,
             'date'             => $parsed_transaction->getDate()->toIso8601String(),
@@ -71,22 +72,29 @@ class FireflyIII
             'notes'            => "Raw transaction message: $parsed_transaction->raw_transaction_message",
         ];
 
+        // Destination name only works if the destination account does not already exist
         if (is_string($destination_account)) {
             $transaction_data['destination_name'] = $destination_account;
         }
 
+        // Destination id only works if the destination account already exists
         if (is_int($destination_account)) {
             $transaction_data['destination_id'] = $destination_account;
         }
 
-        $request_data = [
-            'transactions' => [$transaction_data],
-        ];
+        // Handle foreign transactions
+        if ($parsed_transaction->isForeignTransaction()) {
+            $transaction_data['amount'] = $parsed_transaction->localAmount();
+            $transaction_data['foreign_currency_code'] = $parsed_transaction->getCurrency()->value;
+            $transaction_data['foreign_amount'] = $parsed_transaction->amount;
+        }
 
         return $this->getJson(
             endpoint: '/transactions',
             method: 'POST',
-            params: $request_data,
+            params: [
+                'transactions' => [$transaction_data],
+            ],
         );
     }
 
