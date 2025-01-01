@@ -6,11 +6,11 @@ use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
-class TestTransactionCommand extends Command
+class TestWebhookCommand extends Command
 {
-    protected $signature = 'transaction:test';
+    protected $signature = 'webhook:test';
 
-    protected $description = 'Command description';
+    protected $description = 'Command to test the webhook';
 
     /**
      * @throws ConnectionException
