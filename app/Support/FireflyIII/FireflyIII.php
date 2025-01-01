@@ -3,6 +3,7 @@
 namespace App\Support\FireflyIII;
 
 use App\Support\FireflyIII\Entities\ParsedTransactionMessage;
+use App\Support\FireflyIII\Enums\AccountTypes;
 use App\Support\FireflyIII\Enums\TransactionTypes;
 use Illuminate\Support\Facades\Http;
 
@@ -74,6 +75,45 @@ class FireflyIII
                     ],
                 ],
             ],
+        );
+    }
+
+    public function accounts(AccountTypes $account_type, bool $get_all = false): array
+    {
+        $params = [
+            'type'  => $account_type->value,
+            'limit' => 20,
+        ];
+
+        $response = $this->getJson(endpoint: '/accounts', params: $params);
+
+        // Return the first page if $get_all is false
+        if (!$get_all) {
+            return $response['data'] ?? [];
+        }
+
+        $accounts = $response['data'] ?? [];
+        $currentPage = $response['meta']['pagination']['current_page'] ?? 1;
+        $totalPages = $response['meta']['pagination']['total_pages'] ?? 1;
+
+        // Fetch remaining pages if $get_all is true
+        while ($currentPage < $totalPages) {
+            $currentPage++;
+            $params['page'] = $currentPage;
+
+            $response = $this->getJson(endpoint: '/accounts', params: $params);
+            $accounts = array_merge($accounts, $response['data'] ?? []);
+        }
+
+        return $accounts;
+    }
+
+    public function updateAccount($account_id, array $data): array
+    {
+        return $this->getJson(
+            endpoint: "/accounts/{$account_id}",
+            method: 'PUT',
+            params: $data,
         );
     }
 }

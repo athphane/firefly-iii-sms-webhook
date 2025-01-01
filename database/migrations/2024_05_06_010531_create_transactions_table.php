@@ -10,14 +10,14 @@ return new class extends Migration {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->string('message');
-            $table->string('vendor');
-            $table->string('currency');
-            $table->float('amount');
+            $table->string('vendor')->nullable();
+            $table->string('currency')->nullable();
+            $table->float('amount')->nullable();
             $table->string('reference_no')->nullable();
             $table->string('approval_code')->nullable();
-            $table->dateTime('transaction_at');
-            $table->boolean('created_on_firefly')->default(false);
-            $table->foreignIdFor(\App\Models\Vendor::class)->constrained()->cascadeOnDelete();
+            $table->dateTime('transaction_at')->nullable();
+            $table->unsignedBigInteger('firefly_transaction_id')->nullable();
+            $table->foreignIdFor(\App\Models\Vendor::class)->nullable()->constrained()->cascadeOnDelete();
             $table->timestamps();
         });
     }

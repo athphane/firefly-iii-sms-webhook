@@ -73,6 +73,6 @@ EOD;
 
     public function getSampleTransaction(): string
     {
-        return "Transaction from 9516 on 01/08/23 at 18:07:29 for MVR69.50 at FRESH SEASON was processed. Reference No:080149405072, Approval Code:405072.";
+        return "Transaction from 9516 on 01/01/25 at 11:06:12 for USD23.00 at DIGITALOCEAN.COM          was processed. Reference No:500106702250, Approval Code:702250.";
     }
 }

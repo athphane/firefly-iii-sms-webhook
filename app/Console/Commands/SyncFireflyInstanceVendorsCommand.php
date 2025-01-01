@@ -3,10 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Models\Vendor;
+use App\Support\FireflyIII\Enums\AccountTypes;
+use App\Support\FireflyIII\Facades\FireflyIII;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Http;
 
 class SyncFireflyInstanceVendorsCommand extends Command
 {
@@ -27,18 +28,7 @@ class SyncFireflyInstanceVendorsCommand extends Command
      */
     public function handleTheThing(int $page = 1): void
     {
-        $response = Http::withToken(config('firefly.instance.token'))
-            ->withUrlParameters([
-                'endpoint' => config("firefly.instance.url"),
-                'path'     => 'api/v1/accounts'
-            ])
-            ->withQueryParameters([
-                'type' => 'expense',
-                'page' => $page
-            ])
-            ->get('{+endpoint}/{path}');
-
-        $accounts = $response->json()['data'];
+        $accounts = FireflyIII::accounts(AccountTypes::EXPENSE, true);
 
         foreach ($accounts as $account) {
             $account_id = $account['id'];
@@ -51,24 +41,20 @@ NOT A VENDOR
                 continue;
             }
 
-            $vendor = Vendor::where('name', $attributes['name'])->first();
+            $vendor = Vendor::where('firefly_account_id', $account_id)->first();
 
             if (!$vendor) {
                 $vendor = new Vendor();
-                $vendor->name = $attributes['name'];
-                $vendor->description = $attributes['description'] ?? null;
                 $vendor->firefly_account_id = $account_id;
-                $vendor->save();
             }
+
+            $vendor->name = $attributes['name'];
+            $vendor->description = $attributes['description'] ?? null;
+            $vendor->save();
 
             if ($vendor) {
                 $this->syncVendorAliases($vendor, $attributes['notes'] ?? '');
             }
-
-        }
-
-        if ($response->json()['links']['next'] ?? null) {
-            $this->handleTheThing($page + 1);
         }
     }
 
@@ -99,19 +85,12 @@ NOT A VENDOR
                     ->append("\n*END:ALIASES*\n");
             }
 
-            $response = Http::withToken(config('firefly.instance.token'))
-                ->acceptJson()
-                ->withUrlParameters([
-                    'endpoint' => config("firefly.instance.url"),
-                    'path'     => 'api/v1/accounts',
-                    'account_id' => $vendor->firefly_account_id,
-                ])
-                ->put('{+endpoint}/{path}/{account_id}',[
-                    'name' => $vendor->name,
-                    'notes' => $notes->toString(),
-                ]);
+            FireflyIII::updateAccount($vendor->firefly_account_id, [
+                'name'  => $vendor->name,
+                'notes' => $notes->toString(),
+            ]);
 
-            $this->info($response->status() . ': Vendor aliases synced for: ' . $vendor->name);
+            $this->info('Vendor aliases synced for: ' . $vendor->name);
         }
     }
 }

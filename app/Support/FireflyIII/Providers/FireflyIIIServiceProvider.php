@@ -15,6 +15,7 @@ class FireflyIIIServiceProvider extends ServiceProvider
 
             $base_url = Arr::get($config, 'base_url');
             $api_key = Arr::get($config, 'api_key');
+            $default_account_id = Arr::get($config, 'default_account_id');
 
             return new FireflyIII($base_url, $api_key);
         });
