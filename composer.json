@@ -12,6 +12,7 @@
         "filament/filament": "^3.2",
         "irazasyed/telegram-bot-sdk": "^3.14",
         "jeffgreco13/filament-breezy": "^2.4",
+        "laravel-notification-channels/telegram": "^5.0",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9"

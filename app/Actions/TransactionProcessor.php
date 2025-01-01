@@ -4,9 +4,11 @@ namespace App\Actions;
 
 use App\Models\Transaction;
 use App\Models\Vendor;
+use App\Notifications\SendTransactionCreatedNotification;
 use App\Support\FireflyIII\Entities\ParsedTransactionMessage;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 
 class TransactionProcessor
 {
@@ -66,6 +68,10 @@ class TransactionProcessor
 
         $transaction->firefly_transaction_id = $firefly_transaction_id;
         $transaction->save();
+
+        Notification::route('telegram', env('TELEGRAM_NOTIF_USER_ID'))
+            ->notifyNow(new SendTransactionCreatedNotification($transaction));
+
     }
 
     private function getSystemMessage(): string

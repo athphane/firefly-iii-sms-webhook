@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Jobs\ProcessTransactionJob;
 use App\Support\FireflyIII\Enums\Currencies;
+use App\Support\FireflyIII\Facades\FireflyIII;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -43,5 +45,12 @@ class Transaction extends Model
         }
 
         ProcessTransactionJob::dispatch($this);
+    }
+
+    public function fireflyUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            return FireflyIII::getTransactionUrl($this->firefly_transaction_id);
+        });
     }
 }
