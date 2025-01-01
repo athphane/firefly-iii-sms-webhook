@@ -1,42 +1,19 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Actions;
 
 use App\Models\Transaction;
+use App\Models\Vendor;
 use App\Support\FireflyIII\Entities\ParsedTransactionMessage;
-use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
-class OpenWebUiTestCommand extends Command
+class TransactionProcessor
 {
-    protected $signature = 'test:transaction';
-
-    protected $description = 'Command description';
-
     /**
      * @throws ConnectionException
      */
-    public function handle(): void
-    {
-        $transaction = new Transaction(['message' => $this->getSampleTransaction()]);
-        $transaction->save();
-
-        $transaction->process();
-
-        dd($transaction);
-
-        $parsed_transaction = $this->callAI();
-
-        $thing = $parsed_transaction->createTransactionOnFirefly();
-
-        dd($thing);
-    }
-
-    /**
-     * @throws ConnectionException
-     */
-    public function callAI(): ParsedTransactionMessage
+    public function getParsedTransactionMessage(string $raw_transaction_message): ParsedTransactionMessage
     {
         $response = Http::baseUrl(config('openwebui.base_url'))
             ->acceptJson()
@@ -47,7 +24,7 @@ class OpenWebUiTestCommand extends Command
                 'messages' => [
                     [
                         'role'    => 'user',
-                        'content' => $this->getSampleTransaction(),
+                        'content' => $raw_transaction_message,
                     ],
                     [
                         'role'    => 'system',
@@ -57,14 +34,37 @@ class OpenWebUiTestCommand extends Command
             ])
             ->json('choices.0.message.content');
 
-        // dd($response->json());
-
         $data = json_decode($response, true);
 
-        return ParsedTransactionMessage::make($this->getSampleTransaction(), $data);
+        return ParsedTransactionMessage::make($raw_transaction_message, $data);
     }
 
-    public function getSystemMessage(): string
+    /**
+     * @throws ConnectionException
+     */
+    public function handle(Transaction $transaction): void
+    {
+        $parsed_transaction = $this->getParsedTransactionMessage($transaction->message);
+
+        $transaction->card = $parsed_transaction->card;
+        $transaction->transaction_at = $parsed_transaction->getDate();
+        $transaction->currency = $parsed_transaction->getCurrency()->value;
+        $transaction->amount = $parsed_transaction->amount;
+        $transaction->location = $parsed_transaction->location;
+        $transaction->approval_code = $parsed_transaction->approval_code;
+        $transaction->reference_no = $parsed_transaction->reference_no;
+
+        $related_vendor = Vendor::where('firefly_account_id', $parsed_transaction->getFirstSimilarAccountId())->first();
+        if ($related_vendor) {
+            $transaction->vendor()->associate($related_vendor);
+        }
+
+        $transaction->save();
+
+        $parsed_transaction->createTransactionOnFirefly();
+    }
+
+    private function getSystemMessage(): string
     {
         return <<<EOD
 You are a companion piece of a larger system that helps me to categorize my day to day transactions.
@@ -77,10 +77,5 @@ You should output each transaction as a json object. Give the json object as as 
 If you cannot find any of the above keys, please return null.
 The system that uses you will parse it into json and go on from there. Please do not do any markdown formatting.
 EOD;
-    }
-
-    public function getSampleTransaction(): string
-    {
-        return "Transaction from 9516 on 01/01/25 at 13:32:59 for USD10.00 at LINODE . AKAMAI           was processed. Reference No:500108578364, Approval Code:578364.";
     }
 }

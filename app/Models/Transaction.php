@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\ProcessTransactionJob;
 use App\Support\FireflyIII\Enums\Currencies;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,5 +34,10 @@ class Transaction extends Model
     public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
+    }
+
+    public function process(): void
+    {
+        ProcessTransactionJob::dispatch($this);
     }
 }
