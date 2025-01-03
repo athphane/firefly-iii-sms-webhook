@@ -74,7 +74,7 @@ class ParsedTransactionMessage
 
     public function getDate(): CarbonImmutable
     {
-        return CarbonImmutable::parse("$this->date $this->time");
+        return CarbonImmutable::createFromFormat('d/m/y H:i:s', "$this->date $this->time");
     }
 
     public function getSimilarAccounts(): array

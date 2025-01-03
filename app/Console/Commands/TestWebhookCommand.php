@@ -20,7 +20,7 @@ class TestWebhookCommand extends Command
         $response = Http::withToken(env('SELF_API_KEY'))
             ->acceptJson()
             ->post('http://firefly-sms-webhook.test/api/transactions/webhook', [
-                'message' => 'Transaction from 9516 on 01/01/25 at 20:40:11 for MVR175.00 at PIZZA BOUNA               was processed. Reference No:500115214234, Approval Code:214234.'
+                'message' => 'Transaction from 9516 on 02/01/25 at 14:03:37 for MVR4636.32 at DHIRAAGU                  was processed. Reference No:500209244524, Approval Code:244524.'
             ]);
 
 
