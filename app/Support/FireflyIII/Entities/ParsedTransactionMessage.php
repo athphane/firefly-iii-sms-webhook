@@ -107,8 +107,10 @@ class ParsedTransactionMessage
     {
         $similar_accounts = Vendor::withAliases($this->location)->get();
 
+        // Essentially create the account if it does not exist. This will be a bit annoying because it will
+        // require some admin work.
         if ($similar_accounts->count() === 0) {
-            return str($this->location)->lower()->toString();
+            return str($this->location)->title()->toString();
         }
 
         return $similar_accounts->first()->firefly_account_id;
@@ -144,11 +146,21 @@ class ParsedTransactionMessage
             ->first() ?? 'ADD DESCRIPTION TO THIS TRANSACTION';
     }
 
+    /**
+     * Get all possible categories for the transaction.
+     *
+     * @return array
+     */
     public function getPossibleCategories(): array
     {
-        $raw_transactions = FireflyIII::getTransactionsFromAccount($this->getFirstSimilarAccountId());
-
         $transaction_categories = [];
+
+        // Set category to null if no category was found
+        if ($this->getFirstSimilarAccountId() === null) {
+            return $transaction_categories;
+        }
+
+        $raw_transactions = FireflyIII::getTransactionsFromAccount($this->getFirstSimilarAccountId());
 
         foreach ($raw_transactions['data'] as $raw_transaction) {
             $inner_transactions = $raw_transaction['attributes']['transactions'];
@@ -161,12 +173,17 @@ class ParsedTransactionMessage
         return $transaction_categories;
     }
 
-    public function getFirstPossibleCategoryId(): string
+    /**
+     * Find out the first possible category id for the transaction.
+     *
+     * @return string|null
+     */
+    public function getFirstPossibleCategoryId(): ?string
     {
         return collect($this->getPossibleCategories())
             ->unique()
             ->filter(fn($category) => $category !== null)
-            ->first();
+            ->first() ?? null;
     }
 
     public function createTransactionOnFirefly(): array
