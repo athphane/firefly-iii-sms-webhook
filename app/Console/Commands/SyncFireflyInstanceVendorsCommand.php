@@ -6,8 +6,8 @@ use App\Models\Vendor;
 use App\Support\FireflyIII\Enums\AccountTypes;
 use App\Support\FireflyIII\Facades\FireflyIII;
 use Illuminate\Console\Command;
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 class SyncFireflyInstanceVendorsCommand extends Command
 {
@@ -15,17 +15,11 @@ class SyncFireflyInstanceVendorsCommand extends Command
 
     protected $description = 'Fetches all the Expense Accounts from your Firefly Instance and syncs them as Vendors in the application.';
 
-    /**
-     * @throws ConnectionException
-     */
     public function handle(): void
     {
         $this->handleTheThing();
     }
 
-    /**
-     * @throws ConnectionException
-     */
     public function handleTheThing(): void
     {
         $accounts = FireflyIII::accounts(AccountTypes::EXPENSE, true);
@@ -34,6 +28,7 @@ class SyncFireflyInstanceVendorsCommand extends Command
             $account_id = $account['id'];
             $attributes = $account['attributes'];
             $notes = $attributes['notes'] ?? null;
+
             if (str($notes)->contains('***
 NOT A VENDOR
 ***')) {
@@ -50,47 +45,28 @@ NOT A VENDOR
 
             $vendor->name = $attributes['name'];
             $vendor->description = $attributes['description'] ?? null;
+
+            $aliases = collect(explode("\n", str($notes ?? '')->after("*START:ALIASES*")->beforeLast("*END:ALIASES*")))->filter(fn($alias) => filled($alias));
+            $aliases = $aliases->map(function ($alias) {
+                return ['name' => $alias];
+            });
+            $vendor->aliases = $aliases->toArray();
+
             $vendor->save();
 
-            if ($vendor) {
-                $this->syncVendorAliases($vendor, $attributes['notes'] ?? '');
-            }
-        }
-    }
-
-    /**
-     * @throws ConnectionException
-     */
-    public function syncVendorAliases(Vendor $vendor, string $existing_notes): void
-    {
-        if ($vendor->aliases) {
-            if (filled($existing_notes)) {
-                $existing_aliases = str($existing_notes)
-                    ->between("*START:ALIASES* \n", "\n*END:ALIASES*\n");
-
-                if ($existing_aliases->isEmpty()) {
-                    $notes = str($existing_notes)
-                        ->prepend("*START:ALIASES* \n")
-                        ->append(implode(",\n", Arr::flatten($vendor->aliases)))
-                        ->append("\n*END:ALIASES*\n");
-                } else {
-                    $notes = str($existing_notes)
-                        ->replace($existing_aliases, implode(",\n", Arr::flatten($vendor->aliases)))
-                        ->append("\n*END:ALIASES*\n");
-                }
-            } else {
+            if ($vendor->aliases) {
                 $notes = str('')
                     ->prepend("*START:ALIASES* \n")
-                    ->append(implode(",\n", Arr::flatten($vendor->aliases)))
+                    ->append(implode("\n", Arr::flatten($vendor->aliases)))
                     ->append("\n*END:ALIASES*\n");
+
+                FireflyIII::updateAccount($vendor->firefly_account_id, [
+                    'name'  => $vendor->name,
+                    'notes' => $notes->toString(),
+                ]);
+
+                $this->info('Vendor aliases synced for: ' . $vendor->name);
             }
-
-            FireflyIII::updateAccount($vendor->firefly_account_id, [
-                'name'  => $vendor->name,
-                'notes' => $notes->toString(),
-            ]);
-
-            $this->info('Vendor aliases synced for: ' . $vendor->name);
         }
     }
 }

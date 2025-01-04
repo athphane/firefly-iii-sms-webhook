@@ -75,7 +75,9 @@ class VendorResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('description')->limit()
+                TextColumn::make('description')->limit(),
+
+                TextColumn::make('aliases_count')
             ])
             ->filters([
                 //
