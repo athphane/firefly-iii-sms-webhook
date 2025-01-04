@@ -26,7 +26,7 @@ class SyncFireflyInstanceVendorsCommand extends Command
     /**
      * @throws ConnectionException
      */
-    public function handleTheThing(int $page = 1): void
+    public function handleTheThing(): void
     {
         $accounts = FireflyIII::accounts(AccountTypes::EXPENSE, true);
 
