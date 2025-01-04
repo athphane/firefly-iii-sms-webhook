@@ -26,10 +26,10 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            ->path('/')
             ->login()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Blue,
             ])
             ->topNavigation()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
@@ -39,14 +39,14 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 BreezyCore::make()
-                ->myProfile()
-                ->enableTwoFactorAuthentication(force: false)
-                ->enableSanctumTokens(permissions: [
-                    'transaction:create',
-                    'transaction:write',
-                    'webhook:read',
-                    'webhook:write'
-                ])
+                    ->myProfile()
+                    ->enableTwoFactorAuthentication(force: false)
+                    ->enableSanctumTokens(permissions: [
+                        'transaction:create',
+                        'transaction:write',
+                        'webhook:read',
+                        'webhook:write'
+                    ])
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
