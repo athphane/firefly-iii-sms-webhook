@@ -69,7 +69,7 @@ class TransactionProcessor
         $transaction->firefly_transaction_id = $firefly_transaction_id;
         $transaction->save();
 
-        Notification::route('telegram', env('TELEGRAM_NOTIF_USER_ID'))
+        Notification::route('telegram', config('telegram.admin_user_id'))
             ->notifyNow(new SendTransactionCreatedNotification($transaction));
 
     }

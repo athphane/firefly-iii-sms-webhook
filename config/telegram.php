@@ -215,4 +215,6 @@ return [
         // 'stop' => Acme\Project\Commands\StopCommand::class,
         // 'status' => Acme\Project\Commands\StatusCommand::class,
     ],
+
+    'admin_user_id' => env('TELEGRAM_NOTIF_USER_ID')
 ];
