@@ -8,3 +8,8 @@
 //
 //     return $result->text();
 // });
+
+
+use App\Http\Controllers\TelegramWebhookController;
+
+Route::match(['GET', 'POST'], '/{telegram_token}/webhook', [TelegramWebhookController::class, 'handle'])->name('telegram.webhook');
