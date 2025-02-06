@@ -10,7 +10,7 @@ class TelegramWebhookController extends Controller
     public function handle($telegram_token, Request $request)
     {
         if ($telegram_token === config('telegram.bot_token')) {
-            $updates = Telegram::getWebhookUpdate();
+            $updates = Telegram::getWebhookUpdates();
 
             dd($updates);
         }
