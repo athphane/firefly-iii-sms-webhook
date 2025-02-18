@@ -78,9 +78,6 @@ class ParsedTransactionMessage
 
         $format = $this->is_receipt ? 'd/m/Y H:i' : 'd/m/y H:i:s';
 
-        dump($format);
-        dump("$this->date $this->time");
-
         return CarbonImmutable::createFromFormat($format, "$this->date $this->time");
     }
 

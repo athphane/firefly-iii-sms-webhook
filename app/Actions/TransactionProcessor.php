@@ -57,13 +57,9 @@ class TransactionProcessor
                 ]
             );
 
-        dump($response);
-
         $imageAnalysis = $response['choices'][0]['message']['content'];
 
         $data = json_decode($imageAnalysis, true);
-
-        dump($data);
 
         return ParsedTransactionMessage::make($data);
     }
@@ -78,8 +74,6 @@ class TransactionProcessor
         } else {
             $parsed_transaction = $this->getParsedTransactionMessage($transaction->message);
         }
-
-        dump($parsed_transaction);
 
         $transaction->card = $parsed_transaction->card;
         $transaction->transaction_at = $parsed_transaction->getDate(isset($transaction->receipt_path));
