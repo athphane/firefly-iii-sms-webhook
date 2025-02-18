@@ -70,7 +70,7 @@ class FireflyIII
             'source_id'        => config('firefly-iii.default_account_id'),
             // 'destination_name' => $parsed_transaction->getFirstSimilarAccountName(),
             'category_id'      => $parsed_transaction->getFirstPossibleCategoryId(),
-            'tags'             => $parsed_transaction->is_receipt ? ['powered-by-groq'] : ['powered-by-gemini'],
+            'tags'             => ['powered-by-groq'],
             'notes'            => $parsed_transaction->raw_transaction_message ? "Raw transaction message: $parsed_transaction->raw_transaction_message" : null,
         ];
 
