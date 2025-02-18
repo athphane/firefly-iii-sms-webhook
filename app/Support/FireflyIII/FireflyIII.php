@@ -70,8 +70,8 @@ class FireflyIII
             'source_id'        => config('firefly-iii.default_account_id'),
             // 'destination_name' => $parsed_transaction->getFirstSimilarAccountName(),
             'category_id'      => $parsed_transaction->getFirstPossibleCategoryId(),
-            'tags'             => ['powered-by-gemini'],
-            'notes'            => "Raw transaction message: $parsed_transaction->raw_transaction_message",
+            'tags'             => $parsed_transaction->is_receipt ? ['powered-by-groq'] : ['powered-by-gemini'],
+            'notes'            => $parsed_transaction->raw_transaction_message ? "Raw transaction message: $parsed_transaction->raw_transaction_message" : null,
         ];
 
         // Destination name only works if the destination account does not already exist

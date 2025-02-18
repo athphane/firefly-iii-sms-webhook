@@ -9,15 +9,16 @@ use Carbon\CarbonImmutable;
 
 class ParsedTransactionMessage
 {
-    public string $raw_transaction_message;
-    public string $card;
-    public string $date;
-    public string $time;
-    public string $currency;
-    public float $amount;
-    public string $location;
-    public string $approval_code;
-    public string $reference_no;
+    public ?string $raw_transaction_message = null;
+    public ?string $card;
+    public ?string $date;
+    public ?string $time;
+    public ?string $currency;
+    public ?float $amount;
+    public ?string $location;
+    public ?string $approval_code;
+    public ?string $reference_no;
+    public bool $is_receipt = false;
 
     public static function make(array $data): self
     {
@@ -34,14 +35,14 @@ class ParsedTransactionMessage
     }
 
     public function __construct(
-        string $card,
-        string $date,
-        string $time,
-        string $currency,
-        float  $amount,
-        string $location,
-        string $approval_code,
-        string $reference_no
+        ?string $card,
+        ?string $date,
+        ?string $time,
+        ?string $currency,
+        ?float  $amount,
+        ?string $location,
+        ?string $approval_code,
+        ?string $reference_no
     )
     {
         $this->card = $card;
@@ -69,9 +70,18 @@ class ParsedTransactionMessage
         return round($this->amount * $this->getCurrency()->exchangeRate(), 2);
     }
 
-    public function getDate(): CarbonImmutable
+    public function getDate(bool $is_receipt = false): CarbonImmutable
     {
-        return CarbonImmutable::createFromFormat('d/m/y H:i:s', "$this->date $this->time");
+        if ($is_receipt) {
+            $this->is_receipt = true;
+        }
+
+        $format = $this->is_receipt ? 'd/m/Y H:i' : 'd/m/y H:i:s';
+
+        dump($format);
+        dump("$this->date $this->time");
+
+        return CarbonImmutable::createFromFormat($format, "$this->date $this->time");
     }
 
     public function getSimilarAccounts(): array

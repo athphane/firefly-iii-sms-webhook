@@ -8,16 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->longText('receipt')->nullable();
             $table->string('message')->nullable()->change();
-        });
-    }
-
-    public function down(): void
-    {
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->dropColumn('receipt');
-            $table->string('message')->change();
         });
     }
 };

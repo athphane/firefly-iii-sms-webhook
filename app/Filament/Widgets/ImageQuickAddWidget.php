@@ -10,8 +10,9 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
-use Illuminate\Support\Facades\Http;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 
 class ImageQuickAddWidget extends Widget implements HasForms
 {
@@ -38,44 +39,34 @@ class ImageQuickAddWidget extends Widget implements HasForms
             ]);
     }
 
+    /**
+     * @return void
+     * @throws FileDoesNotExist|FileIsTooBig
+     */
     public function submitTransaction(): void
     {
         $this->form->validate();
 
         $transaction = new Transaction();
+        $transaction->save();
+
 
         if (!empty($this->data['receipt'])) {
             /** @var TemporaryUploadedFile $receipt */
             $receipt = Arr::flatten($this->data['receipt'])[0];
 
+            $transaction->addMedia($receipt)
+                ->toMediaCollection('receipt');
 
-            $path = $receipt->getPath();
-            $file_name = $receipt->getFilename();
-            $full_path = str($path)->append('/' . $file_name)->toString();
-
-            if (file_exists($full_path)) {
-                $response = Http::baseUrl(config('openwebui.base_url'))
-                    ->acceptJson()
-                    ->withToken(config('openwebui.api_key'))
-                    ->attach('file', fopen($full_path, 'r'), basename($full_path))
-                    ->post('v1/files');
-
-                $data = $response->json();
-
-                dd($data);
-
-                $transaction->receipt = base64_encode(file_get_contents($full_path));
-            }
+            $this->data['receipt'] = null;
         }
 
-        if ($transaction->save()) {
-            $transaction->process();
+        $transaction->process();
 
-            Notification::make('success')
-                ->title('Transaction Submitted')
-                ->body('Transaction will be processed shortly.')
-                ->success()
-                ->send();
-        }
+        Notification::make('success')
+            ->title('Transaction Submitted')
+            ->body('Transaction will be processed shortly.')
+            ->success()
+            ->send();
     }
 }

@@ -9,6 +9,8 @@ use App\Support\FireflyIII\Entities\ParsedTransactionMessage;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
+use LucianoTonet\GroqLaravel\Facades\Groq;
+use LucianoTonet\GroqPHP\GroqException;
 
 class TransactionProcessor
 {
@@ -42,40 +44,26 @@ class TransactionProcessor
     }
 
     /**
-     * @throws ConnectionException
+     * @throws GroqException
      */
-    public function getParsedTransactionMessageViaImage(string $base_64_image): ParsedTransactionMessage
+    public function getParsedTransactionMessageViaImage(string $receipt_path): ParsedTransactionMessage
     {
-        $response = Http::baseUrl(config('openwebui.base_url'))
-            ->acceptJson()
-            ->withToken(config('openwebui.api_key'))
-            ->post('chat/completions', [
-                'stream'   => false,
-                'model'    => 'google_genai.gemini-2.0-flash-exp',
-                'messages' => [
-                    [
-                        'role'    => 'user',
-                        'content' => 'Parse the details out of the image. ' . '',
-                        'files'   => [
-                            [
-                                'type' => 'image',
-                                'url'  => 'data:image/jpeg;base64,' . $base_64_image
-                            ]
-                        ]
-                    ],
-                    [
-                        'role'    => 'system',
-                        'content' => $this->getSystemMessageForImage()
-                    ],
-                ],
-            ])
-            ->json();
+        $response = Groq::vision()
+            ->analyze(
+                imagePathOrUrl: $receipt_path,
+                prompt: $this->getSystemMessageForImage(),
+                options: [
+                    'model' => 'llama-3.2-11b-vision-preview'
+                ]
+            );
 
-        dd($response);
+        dump($response);
 
-        $data = json_decode($response, true);
+        $imageAnalysis = $response['choices'][0]['message']['content'];
 
-        dd($data);
+        $data = json_decode($imageAnalysis, true);
+
+        dump($data);
 
         return ParsedTransactionMessage::make($data);
     }
@@ -85,14 +73,16 @@ class TransactionProcessor
      */
     public function handle(Transaction $transaction): void
     {
-        if ($transaction->receipt) {
-            $parsed_transaction = $this->getParsedTransactionMessageViaImage($transaction->receipt);
+        if ($receipt_path = $transaction->receipt_path) {
+            $parsed_transaction = $this->getParsedTransactionMessageViaImage($receipt_path);
         } else {
             $parsed_transaction = $this->getParsedTransactionMessage($transaction->message);
         }
 
+        dump($parsed_transaction);
+
         $transaction->card = $parsed_transaction->card;
-        $transaction->transaction_at = $parsed_transaction->getDate();
+        $transaction->transaction_at = $parsed_transaction->getDate(isset($transaction->receipt_path));
         $transaction->currency = $parsed_transaction->getCurrency()->value;
         $transaction->amount = $parsed_transaction->amount;
         $transaction->location = $parsed_transaction->location;
@@ -135,14 +125,9 @@ EOD;
     private function getSystemMessageForImage(): string
     {
         return <<<EOD
-You are a companion piece of a larger system that helps me to categorize my day to day transactions.
-I will give you an image of a transaction receipt that I receive from my bank.
-This transaction receipt will contain a reference number of the transaction, the date and time of the transaction, the currency and amount of the transaction,
-and to who the transaction was sent to.
-Your task is it to extract out the important details of each transaction.
-You should output each transaction as a json object. Give the json object as as string. The json object you return MUST have the following keys: date,time,currency,amount,location,reference_no.
-If you cannot find any of the above keys, please return null.
-The system that uses you will parse it into json and go on from there. Please do not do any markdown formatting.
+You are a companion piece of a larger system that helps me to categorize my day to day transactions. I will give you an image of a transaction receipt that I received from my bank. This receipt will contain a reference number of the transaction, the date and time of the transaction, the currency and amount of the transaction, and to who the transaction was sent to.
+Your task is it to extract out the important details of each transaction. You should ONLY output each transaction as a json object and nothing else. Any other text that you output is not ideal at all. Make sure that string values are quoted correctly. I do not need to see your thinking process. All I need is the final JSON output of the data that I ask you to capture. If you give extra details, then that means the rest of the system will break and will not be able to move forward. The json object you return MUST have the following keys: date,time,currency,amount,location,reference_no. The location can be referred to as the "to" field in the receipt.
+If you cannot find any of the above keys, please return null in the appropriate key. The system that uses you will parse it into json and go on from there. Please do not do any markdown formatting. Please do not include any other text in your response.
 EOD;
     }
 }

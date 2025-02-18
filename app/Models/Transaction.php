@@ -9,10 +9,13 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Transaction extends Model
+class Transaction extends Model implements HasMedia
 {
     use HasFactory;
+    use InteractsWithMedia;
 
     protected $fillable = [
         'card',
@@ -23,7 +26,6 @@ class Transaction extends Model
         'approval_code',
         'reference_no',
         'message',
-        'receipt'
     ];
 
     protected function casts(): array
@@ -52,6 +54,19 @@ class Transaction extends Model
     {
         return Attribute::get(function () {
             return FireflyIII::getTransactionUrl($this->firefly_transaction_id);
+        });
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('receipt')
+            ->singleFile();
+    }
+
+    public function receiptPath(): Attribute
+    {
+        return Attribute::get(function () {
+            return $this->getFirstMediaPath('receipt');
         });
     }
 }
