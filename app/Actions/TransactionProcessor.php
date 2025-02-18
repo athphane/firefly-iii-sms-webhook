@@ -7,7 +7,6 @@ use App\Models\Vendor;
 use App\Notifications\SendTransactionCreatedNotification;
 use App\Support\FireflyIII\Entities\ParsedTransactionMessage;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use LucianoTonet\GroqLaravel\Facades\Groq;
 use LucianoTonet\GroqPHP\GroqException;
@@ -15,16 +14,14 @@ use LucianoTonet\GroqPHP\GroqException;
 class TransactionProcessor
 {
     /**
-     * @throws ConnectionException
+     * @throws GroqException
      */
     public function getParsedTransactionMessage(string $raw_transaction_message): ParsedTransactionMessage
     {
-        $response = Http::baseUrl(config('openwebui.base_url'))
-            ->acceptJson()
-            ->withToken(config('openwebui.api_key'))
-            ->post('chat/completions', [
-                'stream'   => false,
-                'model'    => 'google_genai.gemini-2.0-flash-exp',
+        $response = Groq::chat()
+            ->completions()
+            ->create([
+                'model'    => 'llama-3.3-70b-versatile',
                 'messages' => [
                     [
                         'role'    => 'user',
@@ -35,10 +32,11 @@ class TransactionProcessor
                         'content' => $this->getSystemMessageForText()
                     ],
                 ],
-            ])
-            ->json('choices.0.message.content');
+            ]);
 
-        $data = json_decode($response, true);
+        $data = $response['choices'][0]['message']['content'];
+
+        $data = json_decode($data, true);
 
         return ParsedTransactionMessage::make($data);
     }
@@ -65,7 +63,7 @@ class TransactionProcessor
     }
 
     /**
-     * @throws ConnectionException
+     * @throws ConnectionException|GroqException
      */
     public function handle(Transaction $transaction): void
     {
@@ -76,7 +74,7 @@ class TransactionProcessor
         }
 
         $transaction->card = $parsed_transaction->card;
-        $transaction->transaction_at = $parsed_transaction->getDate(isset($transaction->receipt_path));
+        $transaction->transaction_at = $parsed_transaction->getDate((bool)$transaction->getMedia('receipt')->first()?->exists());
         $transaction->currency = $parsed_transaction->getCurrency()->value;
         $transaction->amount = $parsed_transaction->amount;
         $transaction->location = $parsed_transaction->location;
