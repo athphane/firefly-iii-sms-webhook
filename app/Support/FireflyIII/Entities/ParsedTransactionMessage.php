@@ -19,23 +19,21 @@ class ParsedTransactionMessage
     public string $approval_code;
     public string $reference_no;
 
-    public static function make(string $raw_transaction_message, array $data): self
+    public static function make(array $data): self
     {
         return new self(
-            $raw_transaction_message,
-            $data['card'],
-            $data['date'],
-            $data['time'],
-            $data['currency'],
-            $data['amount'],
-            $data['location'],
-            $data['approval_code'],
-            $data['reference_no']
+            data_get($data, 'card'),
+            data_get($data, 'date'),
+            data_get($data, 'time'),
+            data_get($data, 'currency'),
+            data_get($data, 'amount'),
+            data_get($data, 'location'),
+            data_get($data, 'approval_code'),
+            data_get($data, 'reference_no'),
         );
     }
 
     public function __construct(
-        string $raw_transaction_message,
         string $card,
         string $date,
         string $time,
@@ -46,7 +44,6 @@ class ParsedTransactionMessage
         string $reference_no
     )
     {
-        $this->raw_transaction_message = $raw_transaction_message;
         $this->card = $card;
         $this->date = $date;
         $this->time = $time;

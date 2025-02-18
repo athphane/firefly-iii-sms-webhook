@@ -23,6 +23,7 @@ class Transaction extends Model
         'approval_code',
         'reference_no',
         'message',
+        'receipt'
     ];
 
     protected function casts(): array

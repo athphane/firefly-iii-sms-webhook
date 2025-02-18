@@ -30,7 +30,7 @@ class TransactionProcessor
                     ],
                     [
                         'role'    => 'system',
-                        'content' => $this->getSystemMessage()
+                        'content' => $this->getSystemMessageForText()
                     ],
                 ],
             ])
@@ -38,7 +38,46 @@ class TransactionProcessor
 
         $data = json_decode($response, true);
 
-        return ParsedTransactionMessage::make($raw_transaction_message, $data);
+        return ParsedTransactionMessage::make($data);
+    }
+
+    /**
+     * @throws ConnectionException
+     */
+    public function getParsedTransactionMessageViaImage(string $base_64_image): ParsedTransactionMessage
+    {
+        $response = Http::baseUrl(config('openwebui.base_url'))
+            ->acceptJson()
+            ->withToken(config('openwebui.api_key'))
+            ->post('chat/completions', [
+                'stream'   => false,
+                'model'    => 'google_genai.gemini-2.0-flash-exp',
+                'messages' => [
+                    [
+                        'role'    => 'user',
+                        'content' => 'Parse the details out of the image. ' . '',
+                        'files'   => [
+                            [
+                                'type' => 'image',
+                                'url'  => 'data:image/jpeg;base64,' . $base_64_image
+                            ]
+                        ]
+                    ],
+                    [
+                        'role'    => 'system',
+                        'content' => $this->getSystemMessageForImage()
+                    ],
+                ],
+            ])
+            ->json();
+
+        dd($response);
+
+        $data = json_decode($response, true);
+
+        dd($data);
+
+        return ParsedTransactionMessage::make($data);
     }
 
     /**
@@ -46,7 +85,11 @@ class TransactionProcessor
      */
     public function handle(Transaction $transaction): void
     {
-        $parsed_transaction = $this->getParsedTransactionMessage($transaction->message);
+        if ($transaction->receipt) {
+            $parsed_transaction = $this->getParsedTransactionMessageViaImage($transaction->receipt);
+        } else {
+            $parsed_transaction = $this->getParsedTransactionMessage($transaction->message);
+        }
 
         $transaction->card = $parsed_transaction->card;
         $transaction->transaction_at = $parsed_transaction->getDate();
@@ -74,7 +117,7 @@ class TransactionProcessor
 
     }
 
-    private function getSystemMessage(): string
+    private function getSystemMessageForText(): string
     {
         return <<<EOD
 You are a companion piece of a larger system that helps me to categorize my day to day transactions.
@@ -84,6 +127,20 @@ the date and time of the transaction, the currency and amount of the transaction
 where the transaction was taken place, and other information such as approval codes and reference number.
 Your task is it to extract out the important details of each transaction.
 You should output each transaction as a json object. Give the json object as as string. The json object you return MUST have the following keys: card,date,time,currency,amount,location,approval_code,reference_no.
+If you cannot find any of the above keys, please return null.
+The system that uses you will parse it into json and go on from there. Please do not do any markdown formatting.
+EOD;
+    }
+
+    private function getSystemMessageForImage(): string
+    {
+        return <<<EOD
+You are a companion piece of a larger system that helps me to categorize my day to day transactions.
+I will give you an image of a transaction receipt that I receive from my bank.
+This transaction receipt will contain a reference number of the transaction, the date and time of the transaction, the currency and amount of the transaction,
+and to who the transaction was sent to.
+Your task is it to extract out the important details of each transaction.
+You should output each transaction as a json object. Give the json object as as string. The json object you return MUST have the following keys: date,time,currency,amount,location,reference_no.
 If you cannot find any of the above keys, please return null.
 The system that uses you will parse it into json and go on from there. Please do not do any markdown formatting.
 EOD;
