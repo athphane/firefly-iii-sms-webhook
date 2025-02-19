@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use App\Models\Vendor;
 use App\Notifications\SendTransactionCreatedNotification;
 use App\Support\FireflyIII\Entities\ParsedTransactionMessage;
+use App\Support\Groq\Vision;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Notification;
 use LucianoTonet\GroqLaravel\Facades\Groq;
@@ -46,12 +47,17 @@ class TransactionProcessor
      */
     public function getParsedTransactionMessageViaImage(string $receipt_path): ParsedTransactionMessage
     {
-        $response = Groq::vision()
+        $groq = new \LucianoTonet\GroqPHP\Groq(config('groq.api_key'));
+        $vision = new Vision($groq);
+
+        $response = $vision
             ->analyze(
                 imagePathOrUrl: $receipt_path,
                 prompt: $this->getSystemMessageForImage(),
                 options: [
-                    'model' => 'llama-3.2-11b-vision-preview'
+                    'response_format' => [
+                        'type' => 'json_object'
+                    ],
                 ]
             );
 
@@ -117,9 +123,26 @@ EOD;
     private function getSystemMessageForImage(): string
     {
         return <<<EOD
-You are a companion piece of a larger system that helps me to categorize my day to day transactions. I will give you an image of a transaction receipt that I received from my bank. This receipt will contain a reference number of the transaction, the date and time of the transaction, the currency and amount of the transaction, and to who the transaction was sent to.
-Your task is it to extract out the important details of each transaction. You should ONLY output each transaction as a json object and nothing else. Any other text that you output is not ideal at all. Make sure that string values are quoted correctly. I do not need to see your thinking process. All I need is the final JSON output of the data that I ask you to capture. If you give extra details, then that means the rest of the system will break and will not be able to move forward. The json object you return MUST have the following keys: date,time,currency,amount,location,reference_no. The location can be referred to as the "to" field in the receipt.
-If you cannot find any of the above keys, please return null in the appropriate key. The system that uses you will parse it into json and go on from there. Please do not do any markdown formatting. Please do not include any other text in your response.
+You are part of a system designed to extract specific details from transaction receipts.
+When given an image of a receipt, your task is to extract the following information:
+- Date of the transaction
+- Time of the transaction
+- Currency used
+- Amount of the transaction
+- Location (referred to as the "to" field on the receipt)
+- Reference number of the transaction
+
+You must output the extracted data as a JSON object with the keys: `date`, `time`, `currency`, `amount`, `location`, and `reference_no`.
+
+**Important Instructions for the `amount` Field:**
+- The `amount` should always be a number, not a string.
+- If the receipt contains the amount in a format like "MVR 1,234.56", extract only the numerical part and remove any commas. For example, "1,234.56" should be converted to `1234.56`.
+- If the amount is not present or cannot be extracted, set the `amount` to `null`.
+
+If any other details are missing, the corresponding key should have a value of `null`.
+Ensure that all string values are properly quoted.
+
+Do not include any additional text or explanations in your response. The output should exclusively be the JSON object.
 EOD;
     }
 }
