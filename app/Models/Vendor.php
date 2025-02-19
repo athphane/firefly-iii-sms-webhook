@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\FireflyIII\Enums\AccountTypes;
 use App\Support\FireflyIII\Facades\FireflyIII;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -17,10 +18,12 @@ class Vendor extends Model
         'name',
         'description',
         'aliases',
+        'account_type'
     ];
 
     protected $casts = [
         'aliases' => 'array',
+        'account_type' => AccountTypes::class,
     ];
 
     protected static function boot()

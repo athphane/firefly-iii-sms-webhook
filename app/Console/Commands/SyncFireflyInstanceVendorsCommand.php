@@ -7,7 +7,6 @@ use App\Support\FireflyIII\Enums\AccountTypes;
 use App\Support\FireflyIII\Facades\FireflyIII;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
 
 class SyncFireflyInstanceVendorsCommand extends Command
 {
@@ -17,12 +16,13 @@ class SyncFireflyInstanceVendorsCommand extends Command
 
     public function handle(): void
     {
-        $this->handleTheThing();
+        $this->handleTheThing(AccountTypes::EXPENSE);
+        $this->handleTheThing(AccountTypes::REVENUE);
     }
 
-    public function handleTheThing(): void
+    public function handleTheThing(AccountTypes $accountType): void
     {
-        $accounts = FireflyIII::accounts(AccountTypes::EXPENSE, true);
+        $accounts = FireflyIII::accounts($accountType, true);
 
         foreach ($accounts as $account) {
             $account_id = $account['id'];
@@ -40,6 +40,7 @@ NOT A VENDOR
 
             if (!$vendor) {
                 $vendor = new Vendor();
+                $vendor->account_type = $accountType;
                 $vendor->firefly_account_id = $account_id;
             }
 

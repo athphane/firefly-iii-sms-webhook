@@ -8,7 +8,6 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -41,7 +40,7 @@ class VendorResource extends Resource
                                     ->required(),
 
                                 Textarea::make('description')
-                                ->rows(5),
+                                    ->rows(5),
 
                                 Repeater::make('aliases')
                                     ->schema([
@@ -76,6 +75,10 @@ class VendorResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('description')->limit(),
+
+                TextColumn::make('account_type')
+                    ->badge()
+                    ->searchable(),
 
                 TextColumn::make('aliases_count')
             ])
