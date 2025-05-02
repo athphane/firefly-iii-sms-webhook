@@ -9,6 +9,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
+use Illuminate\Support\Facades\DB;
 
 class QuickAddWidget extends Widget implements HasForms
 {
@@ -40,17 +41,19 @@ class QuickAddWidget extends Widget implements HasForms
     {
         $this->form->validate();
 
-        $transaction = new Transaction(['message' => $this->data['message']]);
+        DB::transaction(function () {
+            $transaction = new Transaction(['message' => $this->data['message']]);
 
-        if ($transaction->save()) {
-            $transaction->process();
+            if ($transaction->save()) {
+                $transaction->process();
 
-            Notification::make('success')
-                ->title('Transaction Submitted')
-                ->body('Transaction will be processed shortly.')
-                ->success()
-                ->send();
-        }
+                Notification::make('success')
+                    ->title('Transaction Submitted')
+                    ->body('Transaction will be processed shortly.')
+                    ->success()
+                    ->send();
+            }
+        });
 
         $this->data['message'] = null;
     }
