@@ -34,10 +34,9 @@ class ImageQuickAddWidget extends Widget implements HasForms
         return $form
             ->statePath('data')
             ->schema([
-                FileUpload::make('receipts')
+                FileUpload::make('receipt')
                     ->label('Transaction Receipt')
                     ->required()
-                    ->multiple()
             ]);
     }
 
@@ -50,24 +49,23 @@ class ImageQuickAddWidget extends Widget implements HasForms
         $this->form->validate();
 
         DB::transaction(function () {
-            $receipts = $this->data['receipts'];
+            $transaction = new Transaction();
+            $transaction->save();
 
-            /** @var TemporaryUploadedFile $receipt */
-            foreach ($receipts as $key => $receipt) {
-                $transaction = new Transaction();
-                $transaction->save();
+            if (!empty($this->data['receipt'])) {
+                /** @var TemporaryUploadedFile $receipt */
+                $receipt = Arr::flatten($this->data['receipt'])[0];
 
                 $transaction->addMedia($receipt)
-                    ->toMediaCollection('receipts');
+                    ->toMediaCollection('receipt');
 
-                $transaction->process();
+                $this->data['receipt'] = null;
             }
 
-            $this->data['receipt'] = null;
-
+            $transaction->process();
             Notification::make('success')
-                ->title('Transactions Submitted')
-                ->body('Transactions will be processed shortly.')
+                ->title('Transaction Submitted')
+                ->body('Transaction will be processed shortly.')
                 ->success()
                 ->send();
         });
