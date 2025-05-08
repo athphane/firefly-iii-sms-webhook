@@ -25,7 +25,7 @@ class TelegramWebhookController extends Controller
                 $transaction = new Transaction(['message' => $message]);
 
                 if ($transaction->save()) {
-                    $transaction->process();
+                    $transaction->process(false);
 
                     $transaction = $transaction->refresh();
 

@@ -41,13 +41,13 @@ class Transaction extends Model implements HasMedia
         return $this->belongsTo(Vendor::class);
     }
 
-    public function process(): void
+    public function process(bool $notify = true): void
     {
         if ($this->firefly_transaction_id) {
             return;
         }
 
-        ProcessTransactionJob::dispatch($this);
+        ProcessTransactionJob::dispatch($this, $notify);
     }
 
     public function fireflyUrl(): Attribute

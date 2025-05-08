@@ -72,7 +72,7 @@ class TransactionProcessor
     /**
      * @throws ConnectionException|GroqException
      */
-    public function handle(Transaction $transaction): void
+    public function handle(Transaction $transaction): Transaction
     {
         if ($receipt_path = $transaction->receipt_path) {
             $parsed_transaction = $this->getParsedTransactionMessageViaImage($receipt_path);
@@ -101,9 +101,7 @@ class TransactionProcessor
         $transaction->firefly_transaction_id = $firefly_transaction_id;
         $transaction->save();
 
-        Notification::route('telegram', config('telegram.admin_user_id'))
-            ->notifyNow(new SendTransactionCreatedNotification($transaction));
-
+        return $transaction;
     }
 
     private function getSystemMessageForText(): string
