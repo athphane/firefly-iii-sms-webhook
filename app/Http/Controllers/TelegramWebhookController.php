@@ -13,7 +13,7 @@ class TelegramWebhookController extends Controller
         if ($telegram_token === config('telegram.bots.mybot.token')) {
             $update = Telegram::getWebhookUpdate();
 
-            Log::info($update->keys());
+            Log::info($update->get('message'));
         }
 
         return 'ok';
