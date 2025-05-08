@@ -12,8 +12,5 @@
 
 use App\Http\Controllers\TelegramWebhookController;
 
-Route::post(
-    '/webhooks/telegram/{telegram_token}',
-    [TelegramWebhookController::class, 'handle']
-)
+Route::post('/telegram/{telegram_token}/webhook', [TelegramWebhookController::class, 'handle'])
     ->name('telegram.webhook');

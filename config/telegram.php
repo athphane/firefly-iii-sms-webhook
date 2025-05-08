@@ -43,10 +43,6 @@ return [
                 //Acme\Project\Commands\MyTelegramBot\BotCommand::class
             ],
         ],
-
-        //        'mySecondBot' => [
-        //            'token' => '123456:abc',
-        //        ],
     ],
 
     /*
