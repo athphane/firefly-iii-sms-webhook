@@ -16,29 +16,34 @@ class TelegramWebhookController extends Controller
      */
     public function handle($telegram_token, Request $request)
     {
-        if ($telegram_token === config('telegram.bots.mybot.token')) {
-            $update = Telegram::getWebhookUpdate();
+        abort_if(! $this->ensureFromTelegram($telegram_token), 404);
 
-            $message = $update->get('message')->get('text');
+        $update = Telegram::getWebhookUpdate();
 
-            DB::transaction(function () use ($message) {
-                $transaction = new Transaction(['message' => $message]);
+        $message = $update->get('message')->get('text');
 
-                if ($transaction->save()) {
-                    $transaction->process(false);
+        DB::transaction(function () use ($message) {
+            $transaction = new Transaction(['message' => $message]);
 
-                    $transaction = $transaction->refresh();
+            if ($transaction->save()) {
+                $transaction->process(false);
 
-                    if ($transaction->firefly_url) {
-                        $response = Telegram::sendMessage([
-                            'chat_id' => config('telegram.admin_user_id'),
-                            'text' => $transaction->firefly_url,
-                        ]);
-                    }
+                $transaction = $transaction->refresh();
+
+                if ($transaction->firefly_url) {
+                    $response = Telegram::sendMessage([
+                        'chat_id' => config('telegram.admin_user_id'),
+                        'text' => $transaction->firefly_url,
+                    ]);
                 }
-            });
-        }
+            }
+        });
 
         return 'ok';
+    }
+
+    private function ensureFromTelegram(string $telegram_token)
+    {
+        return $telegram_token === config('telegram.bots.mybot.token');
     }
 }
